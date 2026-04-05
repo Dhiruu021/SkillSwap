@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Skill Swap Platform
 
 Full-stack skill exchange platform where users can teach what they know and learn what they want, with smart matching, real-time chat, session booking, ratings, and notifications.
@@ -141,4 +142,3 @@ Base URL: `/api`
 - Use a managed MongoDB cluster and set `MONGO_URI` accordingly.
 - Set strong `JWT_SECRET` and unique Cloudinary credentials.
 - Serve the built frontend (Vite `npm run build`) behind a reverse proxy (e.g. Nginx) with HTTPS and point `CLIENT_URL`/`VITE_*` envs to production URLs.
-

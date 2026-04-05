@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base Styling */
+@layer base {
+  body {
+    @apply bg-slate-900 text-slate-100 antialiased min-h-screen;
+  }
+
+  h1 {
+    @apply text-3xl md:text-4xl font-bold;
+  }
+
+  h2 {
+    @apply text-2xl md:text-3xl font-semibold;
+  }
+
+  p {
+    @apply text-sm md:text-base text-slate-300;
+  }
+}
+
+/* Components */
+@layer components {
+
+  /* Card */
+  .card {
+    @apply bg-slate-800 border border-slate-700 rounded-2xl shadow-xl 
+           p-4 sm:p-6 md:p-8 
+           transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl;
+  }
+
+  /* Primary Button */
+  .btn-primary {
+    @apply bg-indigo-500 hover:bg-indigo-600 
+           text-white font-medium 
+           px-4 py-2 md:px-5 md:py-2.5 
+           rounded-lg 
+           transition-all duration-200 
+           active:scale-95 
+           shadow-md;
+  }
+
+  /* Secondary Button */
+  .btn-secondary {
+    @apply bg-slate-700 hover:bg-slate-600 
+           text-white 
+           px-4 py-2 
+           rounded-lg 
+           transition-all duration-200;
+  }
+
+  /* Inputs */
+  .input {
+    @apply w-full 
+           bg-slate-800 
+           text-slate-100 
+           border border-slate-700 
+           placeholder:text-slate-400
+           px-3 py-2 md:px-4 md:py-2.5 
+           rounded-lg 
+           focus:outline-none 
+           focus:ring-2 focus:ring-indigo-500 
+           focus:border-transparent 
+           transition;
+  }
+
+  /* Container */
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Section spacing */
+  .section {
+    @apply py-10 md:py-16;
+  }
+
+}
+
+/* Utilities */
+@layer utilities {
+
+  /* Gradient Background */
+  .bg-main-gradient {
+    @apply bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900;
+  }
+
+  /* Glass Effect */
+  .glass {
+    @apply bg-white/5 backdrop-blur-lg border border-white/10;
+  }
+
+}
+
+/* Typing Animation */
+.typing-text {
+  border-right: 3px solid white;
+  white-space: nowrap;
+  overflow: hidden;
+  display: inline-block;
+  animation: blink 0.7s infinite;
+}
+
+/* Advanced typing animation */
+.animate-typing {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 4px solid white;
+  width: 0;
+  animation: typing 4s steps(20, end) infinite, blink 0.6s step-end infinite;
+  vertical-align: bottom;
+}
+
+@keyframes typing {
+  0% {
+    width: 0;
+  }
+
+  50% {
+    width: 14ch;
+  }
+
+  100% {
+    width: 0;
+  }
+}
+
+@keyframes blink {
+  50% {
+    border-color: transparent;
+  }
+}
+
+/* Scrollbar Modern */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 10px;
+}
+
+/* Mobile Fix */
+@media (max-width: 640px) {
+
+  h1 {
+    @apply text-2xl;
+  }
+
+  h2 {
+    @apply text-xl;
+  }
+
+  .card {
+    @apply p-4 rounded-xl;
+  }
+
+  .btn-primary {
+    @apply w-full text-center;
+  }
+
+}

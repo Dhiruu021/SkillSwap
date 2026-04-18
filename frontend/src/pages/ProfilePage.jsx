@@ -54,6 +54,7 @@ const ProfilePage = () => {
     country: user?.country || '',
     timezone: user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
     languagePreference: user?.languagePreference || 'english',
+    gender: user?.gender || '',
     profilePhoto: null
   });
 
@@ -80,6 +81,7 @@ const ProfilePage = () => {
       country: user?.country || '',
       timezone: user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
       languagePreference: user?.languagePreference || 'english',
+      gender: user?.gender || '',
       profilePhoto: null
     });
     setPreview(user?.profilePhoto || '');
@@ -223,6 +225,10 @@ const ProfilePage = () => {
             <p className="text-xs uppercase text-gray-500 dark:text-slate-400">Language</p>
             <p className="mt-1 text-sm text-gray-700 dark:text-slate-200">{user.languagePreference || 'English'}</p>
           </div>
+          <div>
+            <p className="text-xs uppercase text-gray-500 dark:text-slate-400">Gender</p>
+            <p className="mt-1 text-sm text-gray-700 dark:text-slate-200">{user.gender ? (user.gender.charAt(0).toUpperCase() + user.gender.slice(1)) : 'Not specified'}</p>
+          </div>
         </div>
         <p className="text-xs text-gray-500 dark:text-slate-400 break-all">User ID: {formatUserId(user._id || user.id)}</p>
       </div>
@@ -313,6 +319,19 @@ const ProfilePage = () => {
             >
               <option value="english">English</option>
               <option value="hindi">Hindi</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">Gender</label>
+            <select
+              className="input"
+              name="gender"
+              value={form.gender}
+              onChange={handleChange}
+            >
+              <option value="">Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
             </select>
           </div>
           <div className="flex items-center gap-3">

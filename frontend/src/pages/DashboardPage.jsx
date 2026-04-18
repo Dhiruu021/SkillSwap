@@ -105,7 +105,9 @@ Exchange Skills, Build Community
 
 
 <p className="text-sm text-slate-400 font-bold pt-4 border-t border-slate-800">
-  Welcome back, <span className="text-indigo-400 font-semibold">{user?.name || "Learner"}</span>! Start your learning journey today.
+  Welcome back, <span className="text-indigo-400 font-semibold">
+    {user?.gender === 'male' ? 'Mr.' : user?.gender === 'female' ? 'Ms.' : ''} {user?.name || "Learner"}
+  </span>! Start your learning journey today.
 </p>
 
 </div>

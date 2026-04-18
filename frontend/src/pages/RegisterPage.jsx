@@ -14,6 +14,7 @@ const RegisterPage = () => {
     country: '',
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
     languagePreference: 'english',
+    gender: '',
     teachSkills: '',
     learnSkills: ''
   });
@@ -39,6 +40,7 @@ const RegisterPage = () => {
         country: form.country.trim(),
         timezone: form.timezone,
         languagePreference: form.languagePreference,
+        gender: form.gender,
         teachSkills: form.teachSkills
           .split(',')
           .map((s) => s.trim())
@@ -150,6 +152,20 @@ const RegisterPage = () => {
             >
               <option value="english">English</option>
               <option value="hindi">Hindi</option>
+            </select>
+          </div>
+          <div className="md:col-span-1">
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Gender</label>
+            <select
+              className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-slate-50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors"
+              name="gender"
+              value={form.gender}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
             </select>
           </div>
           <div className="md:col-span-1">

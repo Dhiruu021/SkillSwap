@@ -48,6 +48,11 @@ const userSchema = new mongoose.Schema({
     enum: ['english', 'hindi'],
     default: 'english',
   },
+  gender: {
+    type: String,
+    enum: ['male', 'female'],
+    default: null,
+  },
   teachSkills: {
     type: [String],
     default: [],

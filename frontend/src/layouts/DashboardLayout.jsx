@@ -1,8 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../state/AuthContext.jsx";
-import { useTheme } from "../state/ThemeContext.jsx";
-import ThemeToggle from "../components/ThemeToggle.jsx";
 import logo from "../assets/logo.png";
 
 const navItems = [
@@ -16,12 +14,28 @@ const navItems = [
 
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
-  const { theme } = useTheme();
+
+  const [dark, setDark] = useState(() => {
+    return localStorage.getItem("theme") !== "light";
+  });
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const menuRef = useRef(null);
+
+  /* THEME */
+  useEffect(() => {
+    const root = document.documentElement;
+
+    if (dark) {
+      root.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      root.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [dark]);
 
   /* CLOSE DROPDOWN */
   useEffect(() => {
@@ -36,7 +50,7 @@ const DashboardLayout = () => {
   }, []);
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+    <div className="flex min-h-screen bg-slate-950 text-slate-100">
 
       {/* MOBILE OVERLAY */}
       {sidebarOpen && (
@@ -48,13 +62,9 @@ const DashboardLayout = () => {
 
       {/* SIDEBAR */}
       <aside
-        className={`fixed md:static z-50 top-0 left-0 h-full w-64 p-4 transform transition-transform duration-300
+        className={`fixed md:static z-50 top-0 left-0 h-full w-64 bg-slate-900 border-r border-slate-800 p-4 transform transition-transform duration-300
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
-        style={{
-          backgroundColor: 'var(--bg-secondary)',
-          borderColor: 'var(--border-primary)'
-        }}
       >
         <Link
           to="/app"
@@ -82,17 +92,10 @@ const DashboardLayout = () => {
               className={({ isActive }) =>
                 `block rounded-lg px-3 py-2 text-base font-medium transition-all ${
                   isActive
-                    ? "text-white shadow"
-                    : "hover:opacity-80"
+                    ? "bg-indigo-500 text-white shadow"
+                    : "text-slate-300 hover:bg-slate-700 hover:text-white"
                 }`
               }
-              style={({ isActive }) => ({
-                backgroundColor: isActive ? 'var(--text-accent)' : 'transparent',
-                color: isActive ? 'white' : 'var(--text-secondary)',
-                ':hover': {
-                  backgroundColor: isActive ? 'var(--text-accent)' : 'var(--bg-hover)'
-                }
-              })}
             >
               {item.label}
             </NavLink>
@@ -105,11 +108,7 @@ const DashboardLayout = () => {
 
         {/* HEADER */}
         <header
-          className="flex items-center justify-between px-4 py-3"
-          style={{
-            backgroundColor: 'var(--bg-secondary)',
-            borderColor: 'var(--border-primary)'
-          }}
+          className="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800"
         >
 
           {/* MOBILE MENU BUTTON */}
@@ -122,18 +121,12 @@ const DashboardLayout = () => {
 
           <div className="flex items-center gap-3 ml-auto">
 
-            {/* THEME TOGGLE */}
-            <ThemeToggle />
-
             {/* PROFILE */}
             {user && (
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
-                  className="flex items-center gap-2 rounded-lg px-2 py-1 transition"
-                  style={{
-                    color: 'var(--text-primary)'
-                  }}
+                  className="flex items-center gap-2 rounded-lg px-2 py-1 transition text-slate-100 hover:text-slate-300"
                 >
                   <img
                     src={
@@ -152,21 +145,13 @@ const DashboardLayout = () => {
                 {/* DROPDOWN */}
                 {menuOpen && (
                   <div
-                    className="absolute right-0 mt-2 w-44 rounded-lg shadow-lg overflow-hidden"
-                    style={{
-                      backgroundColor: 'var(--bg-card)',
-                      borderColor: 'var(--border-primary)',
-                      boxShadow: '0 10px 15px -3px var(--shadow-primary)'
-                    }}
+                    className="absolute right-0 mt-2 w-44 rounded-lg shadow-lg overflow-hidden bg-slate-800 border border-slate-700"
                   >
 
                     <Link
                       to="/app/profile"
                       onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-2 transition"
-                      style={{
-                        color: 'var(--text-primary)'
-                      }}
+                      className="block px-4 py-2 transition text-slate-100 hover:bg-slate-700"
                     >
                       👤 Profile
                     </Link>
@@ -175,15 +160,12 @@ const DashboardLayout = () => {
                     <Link
                       to="/help"
                       onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-2 transition"
-                      style={{
-                        color: 'var(--text-primary)'
-                      }}
+                      className="block px-4 py-2 transition text-slate-100 hover:bg-slate-700"
                     >
                       ❓ Help
                     </Link>
 
-                    <div style={{ borderColor: 'var(--border-primary)' }} className="border-t" />
+                    <div className="border-t border-slate-600" />
 
                     <button
                       onClick={logout}
@@ -203,7 +185,7 @@ const DashboardLayout = () => {
         </header>
 
         {/* PAGE */}
-        <main className="flex-1 p-4 md:p-6" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <main className="flex-1 p-4 md:p-6 bg-slate-950">
           <Outlet />
         </main>
 

@@ -60,27 +60,27 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 px-4 py-8">
-      <div className="w-full max-w-2xl rounded-2xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-white/30 dark:border-slate-700/50 shadow-2xl p-8">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 py-8">
+      <div className="w-full max-w-2xl rounded-2xl bg-slate-900/80 backdrop-blur-md border border-slate-700 shadow-2xl p-8">
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full mb-4">
             <img src="/logo.svg" alt="Skill Swap Logo" className="w-16 h-16" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Create your Skill Swap profile</h1>
-          <p className="text-gray-600 dark:text-slate-300">
+          <h1 className="text-3xl font-bold text-slate-50 mb-2">Create your Skill Swap profile</h1>
+          <p className="text-slate-300">
             Tell us what you can teach and what you want to learn.
           </p>
         </div>
         {error && (
-          <div className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+          <div className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-400">
             {error}
           </div>
         )}
         <form onSubmit={handleSubmit} className="grid gap-5 md:grid-cols-2">
           <div className="md:col-span-1">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Name</label>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Name</label>
             <input
-              className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+              className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-slate-50 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors"
               name="name"
               value={form.name}
               onChange={handleChange}
@@ -88,9 +88,9 @@ const RegisterPage = () => {
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Email</label>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Email</label>
             <input
-              className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+              className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-slate-50 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors"
               type="email"
               name="email"
               value={form.email}
@@ -99,9 +99,9 @@ const RegisterPage = () => {
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Password</label>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Password</label>
             <input
-              className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+              className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-slate-50 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors"
               type="password"
               name="password"
               value={form.password}
@@ -110,18 +110,18 @@ const RegisterPage = () => {
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Short bio</label>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Short bio</label>
             <input
-              className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+              className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-slate-50 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors"
               name="bio"
               value={form.bio}
               onChange={handleChange}
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Country</label>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Country</label>
             <input
-              className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+              className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-slate-50 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors"
               name="country"
               value={form.country}
               onChange={handleChange}
@@ -130,9 +130,9 @@ const RegisterPage = () => {
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Timezone</label>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Timezone</label>
             <input
-              className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+              className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-slate-50 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors"
               name="timezone"
               value={form.timezone}
               onChange={handleChange}
@@ -141,9 +141,9 @@ const RegisterPage = () => {
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Preferred language</label>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Preferred language</label>
             <select
-              className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+              className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-slate-50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors"
               name="languagePreference"
               value={form.languagePreference}
               onChange={handleChange}
@@ -153,11 +153,11 @@ const RegisterPage = () => {
             </select>
           </div>
           <div className="md:col-span-1">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
               Skills you can teach
             </label>
             <textarea
-              className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors min-h-[80px]"
+              className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-slate-50 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors min-h-[80px]"
               name="teachSkills"
               value={form.teachSkills}
               onChange={handleChange}
@@ -165,11 +165,11 @@ const RegisterPage = () => {
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
               Skills you want to learn
             </label>
             <textarea
-              className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors min-h-[80px]"
+              className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-slate-50 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors min-h-[80px]"
               name="learnSkills"
               value={form.learnSkills}
               onChange={handleChange}
@@ -178,15 +178,15 @@ const RegisterPage = () => {
           </div>
           <button
             type="submit"
-            className="md:col-span-2 w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
+            className="md:col-span-2 w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 shadow-lg"
             disabled={loading}
           >
             {loading ? 'Creating account...' : 'Create account'}
           </button>
         </form>
-        <p className="mt-6 text-center text-gray-600 dark:text-slate-400">
+        <p className="mt-6 text-center text-slate-400">
           Already have an account?{' '}
-          <Link to="/login" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold">
+          <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-semibold">
             Log in
           </Link>
         </p>

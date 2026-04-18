@@ -30,6 +30,9 @@ const notificationSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+// TTL index for auto-deletion after 24 hours
+notificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 86400 });
+
 const Notification = mongoose.model('Notification', notificationSchema);
 
 export default Notification;

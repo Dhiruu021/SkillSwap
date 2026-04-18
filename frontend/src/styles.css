@@ -2,10 +2,59 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme Variables */
+:root {
+  /* Light Theme */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-hover: #f8fafc;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --text-accent: #3b82f6;
+
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  --border-accent: #3b82f6;
+
+  --shadow-primary: rgba(0, 0, 0, 0.1);
+  --shadow-secondary: rgba(0, 0, 0, 0.05);
+}
+
+/* Dark Theme */
+.dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-card: #1e293b;
+  --bg-hover: #334155;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-accent: #60a5fa;
+
+  --border-primary: #334155;
+  --border-secondary: #475569;
+  --border-accent: #60a5fa;
+
+  --shadow-primary: rgba(0, 0, 0, 0.3);
+  --shadow-secondary: rgba(0, 0, 0, 0.2);
+}
+
 /* Base Styling */
 @layer base {
+  * {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  }
+
   body {
-    @apply bg-slate-900 text-slate-100 antialiased min-h-screen;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    @apply antialiased min-h-screen;
   }
 
   h1 {
@@ -17,7 +66,8 @@
   }
 
   p {
-    @apply text-sm md:text-base text-slate-300;
+    @apply text-sm md:text-base;
+    color: var(--text-secondary);
   }
 }
 
@@ -26,27 +76,38 @@
 
   /* Card */
   .card {
-    @apply bg-slate-800 border border-slate-700 rounded-2xl shadow-xl 
-           p-4 sm:p-6 md:p-8 
-           transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl;
+    background-color: var(--bg-card);
+    border-color: var(--border-primary);
+    box-shadow: 0 10px 15px -3px var(--shadow-primary), 0 4px 6px -2px var(--shadow-secondary);
+    @apply border rounded-2xl
+           p-4 sm:p-6 md:p-8
+           transition-all duration-300 hover:scale-[1.02];
+  }
+
+  .card:hover {
+    box-shadow: 0 20px 25px -5px var(--shadow-primary), 0 10px 10px -5px var(--shadow-secondary);
   }
 
   /* Primary Button */
   .btn-primary {
-    @apply bg-indigo-500 hover:bg-indigo-600 
-           text-white font-medium 
-           px-4 py-2 md:px-5 md:py-2.5 
-           rounded-lg 
-           transition-all duration-200 
-           active:scale-95 
+    background-color: var(--text-accent);
+    @apply text-white font-medium
+           px-4 py-2 md:px-5 md:py-2.5
+           rounded-lg
+           transition-all duration-200
+           active:scale-95
            shadow-md;
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.1);
   }
 
   /* Secondary Button */
   .btn-secondary {
-    @apply bg-slate-700 hover:bg-slate-600 
-           text-white 
-           px-4 py-2 
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    @apply px-4 py-2
            rounded-lg 
            transition-all duration-200;
   }

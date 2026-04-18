@@ -3,6 +3,7 @@ import Message from '../models/Message.js';
 import Chat from '../models/Chat.js';
 import { uploadChatFile } from '../utils/cloudinary.js';
 import { sanitizeChatContent } from '../utils/chatSanitizer.js';
+import { createNotification } from '../utils/notifications.js';
 
 const onlineUsers = new Map(); // userId -> socketId
 
@@ -34,39 +35,18 @@ export const initSocket = (io) => {
       const chat = await Chat.findById(chatId);
       if (!chat) return;
 
-      const sender = await User.findById(senderId).select('isPremium');
+      const sender = await User.findById(senderId).select('name isPremium');
       const hasPremium = sender?.isPremium;
-      const referenceTime = chat.firstMessageAt || null;
-      const freeWindowMs = 60 * 1000;
-      const freeAllowed = !referenceTime || Date.now() - new Date(referenceTime).getTime() <= freeWindowMs;
 
-      if (!hasPremium && !freeAllowed) {
-        socket.emit('messageError', {
-          chatId,
-          message: 'Your 1 minute free chat has ended. Upgrade to Premium to continue messaging.'
+      for (const p of otherParticipants) {
+        await createNotification({
+          user: p,
+          type: 'message',
+          title: 'New message',
+          body: `${sender.name} sent you a message.`,
+          data: { chatId }
         });
-        return;
       }
-
-      let fileUrl;
-      if (fileBase64) {
-        fileUrl = await uploadChatFile(fileBase64);
-      }
-
-      const message = new Message({
-        chatId,
-        senderId,
-        content: sanitizeChatContent(content),
-        fileUrl,
-        fileType
-      });
-      await message.save();
-
-      if (!chat.firstMessageAt) {
-        chat.firstMessageAt = new Date();
-      }
-      chat.updatedAt = new Date();
-      await chat.save();
 
       const populated = await Message.findById(message._id).populate('senderId', 'name profilePhoto');
       io.to(chatId).emit('newMessage', populated);

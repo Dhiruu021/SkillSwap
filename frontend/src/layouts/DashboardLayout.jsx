@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../state/AuthContext.jsx";
+import { useTheme } from "../state/ThemeContext.jsx";
+import ThemeToggle from "../components/ThemeToggle.jsx";
 import logo from "../assets/logo.png";
 
 const navItems = [
@@ -14,28 +16,12 @@ const navItems = [
 
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
-
-  const [dark, setDark] = useState(() => {
-    return localStorage.getItem("theme") !== "light";
-  });
+  const { theme } = useTheme();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const menuRef = useRef(null);
-
-  /* THEME */
-  useEffect(() => {
-    const root = document.documentElement;
-
-    if (dark) {
-      root.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      root.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [dark]);
 
   /* CLOSE DROPDOWN */
   useEffect(() => {
@@ -50,7 +36,7 @@ const DashboardLayout = () => {
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-100">
+    <div className="flex min-h-screen" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
 
       {/* MOBILE OVERLAY */}
       {sidebarOpen && (
@@ -62,9 +48,13 @@ const DashboardLayout = () => {
 
       {/* SIDEBAR */}
       <aside
-        className={`fixed md:static z-50 top-0 left-0 h-full w-64 bg-slate-900 border-r border-slate-800 p-4 transform transition-transform duration-300
+        className={`fixed md:static z-50 top-0 left-0 h-full w-64 p-4 transform transition-transform duration-300
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
+        style={{
+          backgroundColor: 'var(--bg-secondary)',
+          borderColor: 'var(--border-primary)'
+        }}
       >
         <Link
           to="/app"
@@ -90,12 +80,19 @@ const DashboardLayout = () => {
               end={item.to === "/app"}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `block rounded-lg px-3 py-2 text-base font-medium transition ${
+                `block rounded-lg px-3 py-2 text-base font-medium transition-all ${
                   isActive
-                    ? "bg-indigo-600 text-white shadow"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    ? "text-white shadow"
+                    : "hover:opacity-80"
                 }`
               }
+              style={({ isActive }) => ({
+                backgroundColor: isActive ? 'var(--text-accent)' : 'transparent',
+                color: isActive ? 'white' : 'var(--text-secondary)',
+                ':hover': {
+                  backgroundColor: isActive ? 'var(--text-accent)' : 'var(--bg-hover)'
+                }
+              })}
             >
               {item.label}
             </NavLink>
@@ -107,7 +104,13 @@ const DashboardLayout = () => {
       <div className="flex flex-1 flex-col">
 
         {/* HEADER */}
-        <header className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-3">
+        <header
+          className="flex items-center justify-between px-4 py-3"
+          style={{
+            backgroundColor: 'var(--bg-secondary)',
+            borderColor: 'var(--border-primary)'
+          }}
+        >
 
           {/* MOBILE MENU BUTTON */}
           <button
@@ -119,20 +122,18 @@ const DashboardLayout = () => {
 
           <div className="flex items-center gap-3 ml-auto">
 
-            {/* DARK MODE */}
-            <button
-              onClick={() => setDark((v) => !v)}
-              className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs hover:bg-slate-800 transition"
-            >
-              {dark ? "Light" : "Dark"}
-            </button>
+            {/* THEME TOGGLE */}
+            <ThemeToggle />
 
             {/* PROFILE */}
             {user && (
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
-                  className="flex items-center gap-2 hover:bg-slate-800 rounded-lg px-2 py-1 transition"
+                  className="flex items-center gap-2 rounded-lg px-2 py-1 transition"
+                  style={{
+                    color: 'var(--text-primary)'
+                  }}
                 >
                   <img
                     src={
@@ -150,30 +151,46 @@ const DashboardLayout = () => {
 
                 {/* DROPDOWN */}
                 {menuOpen && (
-                  <div className="absolute right-0 mt-2 w-44 bg-slate-900 border border-slate-700 rounded-lg shadow-lg overflow-hidden">
+                  <div
+                    className="absolute right-0 mt-2 w-44 rounded-lg shadow-lg overflow-hidden"
+                    style={{
+                      backgroundColor: 'var(--bg-card)',
+                      borderColor: 'var(--border-primary)',
+                      boxShadow: '0 10px 15px -3px var(--shadow-primary)'
+                    }}
+                  >
 
                     <Link
                       to="/app/profile"
                       onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-2 hover:bg-slate-800"
+                      className="block px-4 py-2 transition"
+                      style={{
+                        color: 'var(--text-primary)'
+                      }}
                     >
                       👤 Profile
                     </Link>
 
-               
+
                     <Link
                       to="/help"
                       onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-2 hover:bg-slate-800"
+                      className="block px-4 py-2 transition"
+                      style={{
+                        color: 'var(--text-primary)'
+                      }}
                     >
                       ❓ Help
                     </Link>
 
-                    <div className="border-t border-slate-700" />
+                    <div style={{ borderColor: 'var(--border-primary)' }} className="border-t" />
 
                     <button
                       onClick={logout}
-                      className="block w-full text-left px-4 py-2 text-red-400 hover:bg-slate-800"
+                      className="block w-full text-left px-4 py-2 transition"
+                      style={{
+                        color: '#ef4444' // red color for logout
+                      }}
                     >
                       🚪 Logout
                     </button>
@@ -186,7 +203,7 @@ const DashboardLayout = () => {
         </header>
 
         {/* PAGE */}
-        <main className="flex-1 p-4 md:p-6">
+        <main className="flex-1 p-4 md:p-6" style={{ backgroundColor: 'var(--bg-primary)' }}>
           <Outlet />
         </main>
 

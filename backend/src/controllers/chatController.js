@@ -68,7 +68,7 @@ export const sendMessageRest = async (req, res) => {
     throw new Error('Chat not found');
   }
 
-  const sender = await User.findById(req.user.id).select('isPremium');
+  const sender = await User.findById(req.user.id).select('name isPremium');
   const hasPremium = sender?.isPremium;
   const referenceTime = chat.firstMessageAt || null;
   const freeWindowMs = 60 * 1000;
@@ -108,8 +108,8 @@ export const sendMessageRest = async (req, res) => {
     await createNotification({
       user: p,
       type: 'message',
-      title: 'New message received',
-      body: 'You have a new chat message.',
+      title: 'New message',
+      body: `${sender.name} sent you a message.`,
       data: { chatId }
     });
   }

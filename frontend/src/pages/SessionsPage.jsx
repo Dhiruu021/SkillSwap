@@ -6,12 +6,10 @@ const SessionsPage = () => {
 
 const { user } = useAuth();
 const userTimeZone = user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-const locale = user?.languagePreference === "hindi" ? "hi-IN" : "en-US";
 
 const [sessions,setSessions] = useState([]);
-const [creating,setCreating] = useState(false);
-const [teacherPreview,setTeacherPreview] = useState(null);
 const [loading,setLoading] = useState(true);
+const [creating,setCreating] = useState(false);
 const [error,setError] = useState("");
 
 const [newSession,setNewSession] = useState({
@@ -21,19 +19,41 @@ scheduledAt:"",
 meetingLink:""
 });
 
-const [reviewingId,setReviewingId] = useState(null);
+const [timeNow,setTimeNow] = useState(Date.now());
 
-const [review,setReview] = useState({
-rating:5,
-comment:""
-});
+/* 🔔 NOTIFICATIONS PERMISSION */
+
+useEffect(()=>{
+if("Notification" in window){
+Notification.requestPermission();
+}
+},[]);
+
+/* ⏳ LIVE TIMER */
+
+useEffect(()=>{
+const interval = setInterval(()=>{
+setTimeNow(Date.now());
+},60000);
+
+return ()=>clearInterval(interval);
+},[]);
+
+/* 🔄 AUTO REFRESH */
+
+useEffect(()=>{
+const interval = setInterval(()=>{
+load();
+},30000); // every 30s
+
+return ()=>clearInterval(interval);
+},[]);
 
 /* LOAD */
 
 const load = async()=>{
 try{
 setLoading(true);
-setError("");
 const res = await api.get("/sessions");
 setSessions(res.data || []);
 }catch{
@@ -44,59 +64,39 @@ setLoading(false);
 };
 
 useEffect(()=>{
-load().catch(()=>{});
+load();
 },[]);
 
-/* TEACHER PREVIEW */
+/* 🔔 SESSION ALERT */
 
-const loadTeacher = async(id)=>{
-
-if(!id){
-setTeacherPreview(null);
-return;
+const notifySession = (session)=>{
+if(Notification.permission==="granted"){
+new Notification(`Upcoming Session: ${session.skill}`,{
+body:`Starts soon with ${session.teacher?.name}`,
+});
 }
-
-try{
-
-const res = await api.get(`/users/${id}`);
-setTeacherPreview(res.data?.user || null);
-
-}catch{
-
-setTeacherPreview(null);
-
-}
-
-};
-
-/* STATUS */
-
-const updateStatus = async(id,status)=>{
-
-try{
-await api.patch(`/sessions/${id}/status`,{status});
-await load();
-}catch{
-setError("Could not update session status");
-}
-
 };
 
 /* CREATE */
 
 const handleCreate = async(e)=>{
-
 e.preventDefault();
+
+if(newSession.meetingLink && !isValidMeetingLink(newSession.meetingLink)){
+setError("Invalid meeting link (Use Zoom or Google Meet)");
+return;
+}
+
+if(new Date(newSession.scheduledAt) < new Date()){
+setError("Please select future time");
+return;
+}
+
 setCreating(true);
 
 try{
 
-await api.post("/sessions",{
-teacherId:newSession.teacherId.trim(),
-skill:newSession.skill.trim(),
-scheduledAt:newSession.scheduledAt,
-meetingLink:newSession.meetingLink.trim()
-});
+await api.post("/sessions",newSession);
 
 setNewSession({
 teacherId:"",
@@ -105,86 +105,60 @@ scheduledAt:"",
 meetingLink:""
 });
 
-setTeacherPreview(null);
-
-await load();
+load();
 
 }catch{
 setError("Failed to create session");
 }finally{
-
 setCreating(false);
-
 }
-
 };
 
-/* REVIEW */
+/* VALIDATION */
 
-const handleReviewSubmit = async(session)=>{
-
-if(!user) return;
-
-const isTeacher =
-session.teacher?._id === (user._id || user.id);
-
-const revieweeId = isTeacher
-? session.learner?._id
-: session.teacher?._id;
-
-await api.post("/reviews",{
-sessionId:session._id,
-revieweeId,
-rating:Number(review.rating),
-comment:review.comment
-});
-
-setReviewingId(null);
-
-setReview({
-rating:5,
-comment:""
-});
-
+const isValidMeetingLink = (url)=>{
+return url.includes("zoom.us") || url.includes("meet.google.com");
 };
 
-const canReview = (session) => {
-  const me = user?._id || user?.id;
-  const isParticipant =
-    session.teacher?._id === me || session.learner?._id === me;
-  return session.status === "completed" && isParticipant;
+/* STATUS */
+
+const getStatusColor = (status)=>{
+switch(status){
+case "accepted": return "bg-green-500/20 text-green-300";
+case "pending": return "bg-yellow-500/20 text-yellow-300";
+case "completed": return "bg-blue-500/20 text-blue-300";
+default: return "bg-slate-700 text-slate-300";
+}
 };
 
 /* COUNTDOWN */
 
-const getCountdown=(date)=>{
-
-const diff = new Date(date) - new Date();
+const getCountdown=(session)=>{
+const diff = new Date(session.scheduledAt) - timeNow;
 
 if(diff<=0) return "Started";
 
-const hours = Math.floor(diff/1000/60/60);
-const minutes = Math.floor((diff/1000/60)%60);
+const minutes = Math.floor(diff/1000/60);
 
-return `${hours}h ${minutes}m`;
+if(minutes === 5){
+notifySession(session);
+}
 
+const h = Math.floor(minutes/60);
+const m = minutes%60;
+
+return `${h}h ${m}m`;
 };
 
-const formatSessionDate = (value) => {
-  try {
-    return new Intl.DateTimeFormat(locale, {
-      dateStyle: "medium",
-      timeStyle: "short",
-      timeZone: userTimeZone
-    }).format(new Date(value));
-  } catch {
-    return new Date(value).toLocaleString();
-  }
-};
+/* 📊 STATS */
+
+const total = sessions.length;
+const completed = sessions.filter(s=>s.status==="completed").length;
+const pending = sessions.filter(s=>s.status==="pending").length;
 
 if(loading){
 return(
-<div className="flex items-center justify-center h-40 text-slate-400">
+<div className="flex justify-center items-center h-40 text-slate-400">
 Loading sessions...
 </div>
 );
@@ -192,272 +166,145 @@ Loading sessions...
 
 return(
 
-<div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+<div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
 
-<h1 className="text-2xl md:text-3xl font-bold text-slate-100">
-Sessions
+{/* HEADER */}
+
+<div className="text-center">
+<h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+Sessions Dashboard 🚀
 </h1>
+<p className="text-slate-400 text-sm mt-2">
+Manage your learning sessions and track your progress
+</p>
+</div>
 
-{error && (
-<div className="card p-3 text-sm text-red-300 border-red-500/30">
+{/* 📊 STATS */}
+
+<div className="grid grid-cols-3 gap-4">
+
+<div className="p-4 bg-slate-900/60 border border-slate-700 rounded-xl text-center">
+<p className="text-slate-400 text-xs">Total</p>
+<p className="text-xl font-bold text-white">{total}</p>
+</div>
+
+<div className="p-4 bg-slate-900/60 border border-slate-700 rounded-xl text-center">
+<p className="text-slate-400 text-xs">Pending</p>
+<p className="text-xl font-bold text-yellow-300">{pending}</p>
+</div>
+
+<div className="p-4 bg-slate-900/60 border border-slate-700 rounded-xl text-center">
+<p className="text-slate-400 text-xs">Completed</p>
+<p className="text-xl font-bold text-green-300">{completed}</p>
+</div>
+
+</div>
+
+{error &&(
+<div className="text-red-300 bg-red-500/10 p-3 rounded">
 {error}
 </div>
 )}
 
-{/* CREATE SESSION */}
+{/* CREATE */}
 
-<div className="card p-4 space-y-4">
+<div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-700 space-y-4">
 
-<p className="text-lg font-semibold text-slate-200">
-Book new session
-</p>
+<h2 className="text-lg font-semibold text-white">
+📅 Book Session
+</h2>
 
 <form
 onSubmit={handleCreate}
-className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3"
+className="grid md:grid-cols-4 gap-3"
 >
 
 <input
 className="input"
 placeholder="Teacher ID"
 value={newSession.teacherId}
-onChange={(e)=>{
-setNewSession(prev=>({...prev,teacherId:e.target.value}));
-loadTeacher(e.target.value);
-}}
-required
+onChange={(e)=>setNewSession({...newSession,teacherId:e.target.value})}
 />
 
 <input
 className="input"
 placeholder="Skill"
 value={newSession.skill}
-onChange={(e)=>
-setNewSession(prev=>({...prev,skill:e.target.value}))
-}
-required
+onChange={(e)=>setNewSession({...newSession,skill:e.target.value})}
 />
 
 <input
-className="input"
 type="datetime-local"
+min={new Date().toISOString().slice(0,16)}
+className="input"
 value={newSession.scheduledAt}
-onChange={(e)=>
-setNewSession(prev=>({...prev,scheduledAt:e.target.value}))
-}
-required
+onChange={(e)=>setNewSession({...newSession,scheduledAt:e.target.value})}
 />
 
 <input
 className="input"
-placeholder="Meeting link"
+placeholder="Meeting link (Zoom/Meet)"
 value={newSession.meetingLink}
-onChange={(e)=>
-setNewSession(prev=>({...prev,meetingLink:e.target.value}))
-}
+onChange={(e)=>setNewSession({...newSession,meetingLink:e.target.value})}
 />
 
 <button
-type="submit"
-className="btn-primary sm:col-span-2 md:col-span-4"
+className="col-span-full btn-primary"
 disabled={creating}
 >
-{creating ? "Booking..." : "Book Session"}
+{creating ? "Booking..." : "🚀 Book Session"}
 </button>
 
 </form>
 
-{/* TEACHER PREVIEW */}
-
-{teacherPreview && (
-
-<div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-900 p-3 rounded">
-
-{teacherPreview.profilePhoto ? (
-<img
-src={teacherPreview.profilePhoto}
-className="w-12 h-12 rounded-full object-cover"
-/>
-) : (
-<div className="w-12 h-12 rounded-full bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-semibold">
-{teacherPreview.name?.[0] || "T"}
-</div>
-)}
-
-<div className="text-center sm:text-left">
-
-<p className="text-sm font-semibold text-white">
-{teacherPreview.name}
-</p>
-
-<p className="text-xs text-slate-400">
-Teaches: {(teacherPreview.teachSkills || []).join(", ") || "N/A"}
-</p>
-
 </div>
 
-</div>
-
-)}
-
-</div>
-
-{/* SESSION LIST */}
+{/* SESSIONS */}
 
 <div className="space-y-4">
 
-{sessions.length===0 &&(
-
-<div className="card p-4 text-slate-400">
-No sessions yet
-</div>
-
-)}
-
-{sessions.map(session=>(
-
+{sessions.map(s=>(
 <div
-key={session._id}
-className="card p-4 flex flex-col md:flex-row md:justify-between gap-4"
+key={s._id}
+className="p-5 rounded-xl bg-slate-900/60 border border-slate-700 flex justify-between items-center hover:bg-slate-900/80 transition"
 >
 
-{/* LEFT */}
+<div>
 
-<div className="space-y-1">
-
-<p className="font-semibold text-slate-100">
-{session.skill}
+<p className="text-lg font-semibold text-white">
+{s.skill}
 </p>
 
 <p className="text-sm text-slate-400">
-{session.teacher?.name} / {session.learner?.name}
-</p>
-
-<p className="text-xs text-slate-500">
-{formatSessionDate(session.scheduledAt)}
+{s.teacher?.name} ↔ {s.learner?.name}
 </p>
 
 <p className="text-xs text-indigo-400">
-Starts in {getCountdown(session.scheduledAt)}
+⏳ {getCountdown(s)}
 </p>
-
-<p className="text-[11px] text-cyan-300">
-Timezone: {userTimeZone}
-</p>
-
-{session.meetingLink &&(
-
-<a
-href={session.meetingLink}
-target="_blank"
-rel="noreferrer"
-className="text-xs text-green-400 underline"
->
-Join Meeting
-</a>
-
-)}
 
 </div>
 
-{/* RIGHT */}
+<div className="flex flex-col items-end gap-2">
 
-<div className="flex flex-col gap-2 md:items-end">
-
-<span className="text-xs px-2 py-1 bg-slate-800 rounded w-fit">
-{session.status}
+<span className={`text-xs px-3 py-1 rounded-full ${getStatusColor(s.status)}`}>
+{s.status}
 </span>
 
-{session.status==="pending" &&
-session.teacher?._id === (user?._id || user?.id) &&(
-
-<div className="flex flex-wrap gap-2">
-
-<button
-className="btn-primary text-xs"
-onClick={()=>updateStatus(session._id,"accepted")}
+{s.meetingLink &&(
+<a
+href={s.meetingLink}
+target="_blank"
+rel="noreferrer"
+className="text-green-400 text-xs underline"
 >
-Accept
-</button>
-
-<button
-className="border border-slate-700 px-2 py-1 rounded text-xs"
-onClick={()=>updateStatus(session._id,"rejected")}
->
-Reject
-</button>
-
-</div>
-
-)}
-
-{/* REVIEW */}
-
-{canReview(session) &&(
-
-<div className="space-y-2 w-full md:w-56">
-
-{reviewingId===session._id?(
-
-<>
-
-<div className="flex gap-1">
-
-{[1,2,3,4,5].map(star=>(
-
-<button
-key={star}
-onClick={()=>setReview(prev=>({...prev,rating:star}))}
-className={`text-lg ${
-review.rating>=star
-?"text-yellow-400"
-:"text-gray-500"
-}`}
->
-★
-</button>
-
-))}
-
-</div>
-
-<input
-className="input text-xs w-full"
-placeholder="Write review"
-value={review.comment}
-onChange={(e)=>
-setReview(prev=>({...prev,comment:e.target.value}))
-}
-/>
-
-<button
-className="btn-primary text-xs w-full"
-onClick={()=>handleReviewSubmit(session)}
->
-Submit Review
-</button>
-
-</>
-
-):( 
-
-<button
-className="border border-slate-700 px-2 py-1 text-xs rounded w-fit"
-onClick={()=>setReviewingId(session._id)}
->
-Rate Session
-</button>
-
-)}
-
-</div>
-
+Join
+</a>
 )}
 
 </div>
 
 </div>
-
 ))}
 
 </div>

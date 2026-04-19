@@ -1,13 +1,41 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../state/AuthContext.jsx";
 
+const safeLocalStorageGet = (key) => {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    return window.localStorage.getItem(key);
+  } catch (error) {
+    console.warn(`Failed to read localStorage key '${key}':`, error);
+    return null;
+  }
+};
+
+const safeLocalStorageSet = (key, value) => {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    window.localStorage.setItem(key, value);
+  } catch (error) {
+    console.warn(`Failed to write localStorage key '${key}':`, error);
+  }
+};
+
+const safeLocalStorageRemove = (key) => {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    window.localStorage.removeItem(key);
+  } catch (error) {
+    console.warn(`Failed to remove localStorage key '${key}':`, error);
+  }
+};
+
 const HelpPage = () => {
   const { user } = useAuth();
 
   const [showContact, setShowContact] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState(() => {
-    const saved = localStorage.getItem('skillswap_ai_chat');
+    const saved = safeLocalStorageGet('skillswap_ai_chat');
     if (!saved) {
       return [
         { from: "assistant", text: "Hi 👋 Welcome to SkillSwap support. Ask me anything about matches, profiles, sessions, or using the app.", timestamp: Date.now() }
@@ -18,7 +46,7 @@ const HelpPage = () => {
       return JSON.parse(saved);
     } catch (error) {
       console.warn('Invalid saved chat data, resetting storage:', error);
-      localStorage.removeItem('skillswap_ai_chat');
+      safeLocalStorageRemove('skillswap_ai_chat');
       return [
         { from: "assistant", text: "Hi 👋 Welcome to SkillSwap support. Ask me anything about matches, profiles, sessions, or using the app.", timestamp: Date.now() }
       ];
@@ -45,7 +73,7 @@ const HelpPage = () => {
   }, [messages]);
 
   useEffect(() => {
-    localStorage.setItem('skillswap_ai_chat', JSON.stringify(messages));
+    safeLocalStorageSet('skillswap_ai_chat', JSON.stringify(messages));
   }, [messages]);
 
   useEffect(() => {
@@ -81,7 +109,7 @@ const HelpPage = () => {
     setAwaitingLanguageSelection(false);
     setInput("");
     setLoading(false);
-    localStorage.removeItem('skillswap_ai_chat');
+    safeLocalStorageRemove('skillswap_ai_chat');
   };
 
   const startVoiceInput = () => {

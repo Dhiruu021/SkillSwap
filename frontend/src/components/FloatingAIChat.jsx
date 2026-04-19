@@ -1,11 +1,39 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../state/AuthContext.jsx";
 
+const safeLocalStorageGet = (key) => {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    return window.localStorage.getItem(key);
+  } catch (error) {
+    console.warn(`Failed to read localStorage key '${key}':`, error);
+    return null;
+  }
+};
+
+const safeLocalStorageSet = (key, value) => {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    window.localStorage.setItem(key, value);
+  } catch (error) {
+    console.warn(`Failed to write localStorage key '${key}':`, error);
+  }
+};
+
+const safeLocalStorageRemove = (key) => {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    window.localStorage.removeItem(key);
+  } catch (error) {
+    console.warn(`Failed to remove localStorage key '${key}':`, error);
+  }
+};
+
 const FloatingAIChat = () => {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState(() => {
-    const saved = localStorage.getItem('skillswap_ai_chat_global');
+    const saved = safeLocalStorageGet('skillswap_ai_chat_global');
     if (!saved) {
       return [
         { from: "assistant", text: "👋 Hi! I'm your SkillSwap AI assistant. How can I help you today?", timestamp: Date.now() }
@@ -16,7 +44,7 @@ const FloatingAIChat = () => {
       return JSON.parse(saved);
     } catch (error) {
       console.warn('Invalid saved global chat data, resetting storage:', error);
-      localStorage.removeItem('skillswap_ai_chat_global');
+      safeLocalStorageRemove('skillswap_ai_chat_global');
       return [
         { from: "assistant", text: "👋 Hi! I'm your SkillSwap AI assistant. How can I help you today?", timestamp: Date.now() }
       ];
@@ -25,16 +53,27 @@ const FloatingAIChat = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [minimized, setMinimized] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState(() => {
+    const savedLanguage = safeLocalStorageGet('skillswap_ai_chat_language');
+    if (savedLanguage === 'hindi' || savedLanguage === 'english') {
+      return savedLanguage;
+    }
+    return user?.languagePreference === 'hindi' ? 'hindi' : 'english';
+  });
   const messagesEndRef = useRef(null);
 
   const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const chatUrl = apiBase.replace(/\/$/, "") + (apiBase.endsWith("/api") ? "/chat" : "/api/chat");
 
-  const language = user?.languagePreference === "hindi" ? "hindi" : "english";
+  const language = selectedLanguage;
 
   useEffect(() => {
-    localStorage.setItem('skillswap_ai_chat_global', JSON.stringify(messages));
+    safeLocalStorageSet('skillswap_ai_chat_global', JSON.stringify(messages));
   }, [messages]);
+
+  useEffect(() => {
+    safeLocalStorageSet('skillswap_ai_chat_language', selectedLanguage);
+  }, [selectedLanguage]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -53,6 +92,18 @@ const FloatingAIChat = () => {
         role: msg.from === "user" ? "user" : "assistant",
         content: msg.text,
       }));
+
+  const resetChat = () => {
+    const initialMessage = {
+      from: "assistant",
+      text: "👋 Hi! I'm your SkillSwap AI assistant. How can I help you today?",
+      timestamp: Date.now(),
+    };
+
+    setMessages([initialMessage]);
+    setInput("");
+    safeLocalStorageSet('skillswap_ai_chat_global', JSON.stringify([initialMessage]));
+  };
 
   const sendMessage = async () => {
     const messageText = input.trim();
@@ -136,6 +187,22 @@ const FloatingAIChat = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                onClick={resetChat}
+                className="text-white hover:text-indigo-200 transition"
+                title="Refresh chat"
+              >
+                ⟳
+              </button>
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="text-xs bg-slate-800 text-white border border-slate-600 rounded-lg px-2 py-1 outline-none"
+                title="Select chat language"
+              >
+                <option value="english">English</option>
+                <option value="hindi">Hindi</option>
+              </select>
               <button
                 onClick={() => setMinimized(!minimized)}
                 className="text-white hover:text-indigo-200 transition"

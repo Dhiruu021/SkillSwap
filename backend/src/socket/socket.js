@@ -32,11 +32,32 @@ export const initSocket = (io) => {
     });
 
     socket.on('sendMessage', async ({ chatId, senderId, content, fileBase64, fileType }) => {
+      if (!chatId || !senderId || (!content && !fileBase64)) return;
+
       const chat = await Chat.findById(chatId);
       if (!chat) return;
 
       const sender = await User.findById(senderId).select('name isPremium');
-      const hasPremium = sender?.isPremium;
+      if (!sender) return;
+
+      const otherParticipants = chat.participants
+        .map((participant) => participant.toString())
+        .filter((participantId) => participantId !== senderId.toString());
+
+      const fileUrl = fileBase64 ? await uploadChatFile(fileBase64) : null;
+
+      const message = await Message.create({
+        chatId,
+        senderId,
+        content: content || undefined,
+        fileUrl: fileUrl || undefined,
+        fileType: fileType || undefined,
+      });
+
+      if (!chat.firstMessageAt) {
+        chat.firstMessageAt = new Date();
+        await chat.save();
+      }
 
       for (const p of otherParticipants) {
         await createNotification({

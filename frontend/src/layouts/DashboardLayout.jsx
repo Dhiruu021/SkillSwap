@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../state/AuthContext.jsx";
-import logo from "../assets/logo.png";
 import FloatingAIChat from "../components/FloatingAIChat.jsx";
 
 const navItems = [
@@ -10,7 +9,7 @@ const navItems = [
   { to: "/app/matches", label: "Matches" },
   { to: "/app/chat", label: "Chat" },
   { to: "/app/sessions", label: "Sessions" },
-  { to: "/app/notifications", label: "Notifications" },
+  { to: "/app/payments", label: "My Wallet" },
 ];
 
 const DashboardLayout = () => {
@@ -63,7 +62,7 @@ const DashboardLayout = () => {
 
       {/* SIDEBAR */}
       <aside
-        className={`fixed md:static z-50 top-0 left-0 h-full w-64 bg-slate-900 border-r border-slate-800 p-4 transform transition-transform duration-300
+        className={`fixed md:static z-50 top-0 left-0 h-full w-64 bg-slate-900 border-r border-slate-800 p-4 transform transition-transform duration-300 flex flex-col
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
       >
@@ -72,13 +71,8 @@ const DashboardLayout = () => {
           className="flex items-center gap-3 mb-8"
           onClick={() => setSidebarOpen(false)}
         >
-          <img
-            src={logo}
-            alt="Skill Swap Logo"
-            className="h-12 w-12 rounded-full border-2 border-indigo-500 object-cover"
-          />
 
-          <span className="text-xl font-semibold tracking-wide">
+          <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
             SkillSwap
           </span>
         </Link>
@@ -102,25 +96,48 @@ const DashboardLayout = () => {
             </NavLink>
           ))}
         </nav>
+
+        {/* SETTINGS - MOBILE ONLY */}
+        <div className="mt-auto pt-8 border-t border-slate-600 md:hidden">
+          <Link
+            to="/app/settings"
+            onClick={() => setSidebarOpen(false)}
+            className="block rounded-lg px-3 py-2 text-base font-medium transition-all text-slate-300 hover:bg-slate-700 hover:text-white"
+          >
+            ⚙️ Settings
+          </Link>
+        </div>
       </aside>
 
       {/* MAIN */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col">
 
         {/* HEADER */}
         <header
           className="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800"
         >
+          <div className="flex items-center gap-4">
+            {/* MOBILE MENU BUTTON */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden text-xl"
+            >
+              ☰
+            </button>
+          </div>
 
-          {/* MOBILE MENU BUTTON */}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="md:hidden text-xl"
-          >
-            ☰
-          </button>
+          <div className="flex items-center gap-3">
 
-          <div className="flex items-center gap-3 ml-auto">
+            {/* NOTIFICATION ICON */}
+            {user && (
+              <Link
+                to="/app/notifications"
+                className="text-slate-100 hover:text-slate-300 transition text-xl"
+                title="Notifications"
+              >
+                🔔
+              </Link>
+            )}
 
             {/* PROFILE */}
             {user && (
@@ -139,8 +156,6 @@ const DashboardLayout = () => {
                     alt={user.name}
                     className="h-8 w-8 rounded-full border border-slate-700"
                   />
-
-                  <span className="text-sm">{user.name}</span>
                 </button>
 
                 {/* DROPDOWN */}
@@ -186,7 +201,7 @@ const DashboardLayout = () => {
         </header>
 
         {/* PAGE */}
-        <main className="flex-1 p-4 md:p-6 bg-slate-950">
+        <main className="flex-1 min-w-0 overflow-x-hidden p-3 sm:p-4 md:p-6 bg-slate-950">
           <Outlet />
         </main>
 

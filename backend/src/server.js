@@ -19,6 +19,7 @@ import chatRoutes from './routes/chatRoutes.js';
 import sessionRoutes from './routes/sessionRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import walletRoutes from './routes/walletRoutes.js';
 
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
@@ -426,7 +427,7 @@ app.use('/api/chats', chatRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/notifications', notificationRoutes);
-
+app.use('/api/wallet', walletRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

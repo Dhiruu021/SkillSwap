@@ -100,6 +100,43 @@ const userSchema = new mongoose.Schema({
     ],
     default: [],
   },
+  walletBalance: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  walletTransactions: {
+    type: [
+      {
+        trnId: { type: String, required: true },
+        type: { type: String, enum: ['credit', 'debit'], required: true },
+        amount: { type: Number, required: true, min: 0 },
+        method: String,
+        methodId: String,
+        flow: { type: String, enum: ['in', 'out'], default: 'in' },
+        counterpartyName: String,
+        detailLine: String,
+        headline: String,
+        meta: { type: mongoose.Schema.Types.Mixed, default: {} },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
+  },
+  savedPaymentMethods: {
+    type: [
+      {
+        methodId: { type: String, required: true },
+        holderName: String,
+        upiId: String,
+        bankAccount: String,
+        ifsc: String,
+        otherDetail: String,
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
+  },
   passwordResetToken: {
     type: String,
     default: null,

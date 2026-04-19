@@ -15,6 +15,7 @@ import NotificationsPage from './pages/NotificationsPage.jsx';
 import HelpPage from "./pages/HelpPage";
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
+import PaymentsPage from './pages/PaymentsPage.jsx';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -56,6 +57,7 @@ const App = () => {
           <Route path="chat" element={<ChatPage />} />
           <Route path="sessions" element={<SessionsPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="payments" element={<PaymentsPage />} />
         </Route>
       </Routes>
 

@@ -170,7 +170,8 @@ const ProfilePage = () => {
       login(localStorage.getItem('token'), res.data);
       setMessage('Profile updated successfully');
       setIsEditing(false);
-    } catch {
+    } catch (error) {
+      console.error('Profile update error:', error);
       setMessage('Failed to update profile');
     } finally {
       setLoading(false);

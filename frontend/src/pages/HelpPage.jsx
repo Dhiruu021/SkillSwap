@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../state/AuthContext.jsx";
 
 const HelpPage = () => {
@@ -6,18 +6,49 @@ const HelpPage = () => {
 
   const [showContact, setShowContact] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { from: "assistant", text: "Hi 👋 Welcome to SkillSwap support. Ask me anything about matches, profiles, sessions, or using the app." }
-  ]);
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem('skillswap_ai_chat');
+    if (!saved) {
+      return [
+        { from: "assistant", text: "Hi 👋 Welcome to SkillSwap support. Ask me anything about matches, profiles, sessions, or using the app.", timestamp: Date.now() }
+      ];
+    }
+
+    try {
+      return JSON.parse(saved);
+    } catch (error) {
+      console.warn('Invalid saved chat data, resetting storage:', error);
+      localStorage.removeItem('skillswap_ai_chat');
+      return [
+        { from: "assistant", text: "Hi 👋 Welcome to SkillSwap support. Ask me anything about matches, profiles, sessions, or using the app.", timestamp: Date.now() }
+      ];
+    }
+  });
   const [input, setInput] = useState("");
   const [language, setLanguage] = useState("english");
   const [languageConfirmed, setLanguageConfirmed] = useState(false);
   const [awaitingLanguageSelection, setAwaitingLanguageSelection] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const messagesEndRef = useRef(null);
+  const recognitionRef = useRef(null);
+
   const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const chatUrl = apiBase.replace(/\/$/, "") + (apiBase.endsWith("/api") ? "/chat" : "/api/chat");
 
-  React.useEffect(() => {
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    localStorage.setItem('skillswap_ai_chat', JSON.stringify(messages));
+  }, [messages]);
+
+  useEffect(() => {
     if (user?.languagePreference === "hindi" || user?.languagePreference === "english") {
       setLanguage(user.languagePreference);
       setLanguageConfirmed(true);
@@ -29,6 +60,8 @@ const HelpPage = () => {
     "How can I update my profile?",
     "What is SkillSwap?",
     "How do I schedule a session?",
+    "Tell me about premium features",
+    "How to add skills?",
   ];
 
   const buildApiMessages = (sourceMessages = messages) =>
@@ -41,13 +74,54 @@ const HelpPage = () => {
 
   const resetChat = () => {
     setMessages([
-      { from: "assistant", text: "Hi 👋 Welcome to SkillSwap support. Ask me anything about matches, profiles, sessions, or using the app." }
+      { from: "assistant", text: "Hi 👋 Welcome to SkillSwap support. Ask me anything about matches, profiles, sessions, or using the app.", timestamp: Date.now() }
     ]);
     setLanguage("english");
     setLanguageConfirmed(false);
     setAwaitingLanguageSelection(false);
     setInput("");
     setLoading(false);
+    localStorage.removeItem('skillswap_ai_chat');
+  };
+
+  const startVoiceInput = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Voice input not supported in this browser');
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognitionRef.current = new SpeechRecognition();
+    recognitionRef.current.continuous = false;
+    recognitionRef.current.interimResults = false;
+    recognitionRef.current.lang = language === 'hindi' ? 'hi-IN' : 'en-US';
+
+    recognitionRef.current.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognitionRef.current.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+      setIsListening(false);
+    };
+
+    recognitionRef.current.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      setIsListening(false);
+    };
+
+    recognitionRef.current.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current.start();
+  };
+
+  const stopVoiceInput = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
   };
 
   const sendChatRequest = async (selectedLanguage, sourceMessages = messages) => {
@@ -75,6 +149,7 @@ const HelpPage = () => {
       const botMsg = {
         from: "assistant",
         text: data.reply || "⚠️ AI did not return a proper response",
+        timestamp: Date.now(),
       };
 
       setMessages((prev) => [...prev, botMsg]);
@@ -84,6 +159,7 @@ const HelpPage = () => {
         {
           from: "assistant",
           text: `⚠️ AI server not responding (${err.message || "unknown"})`,
+          timestamp: Date.now(),
         },
       ]);
     }
@@ -95,7 +171,7 @@ const HelpPage = () => {
     const messageText = text.trim();
     if (!messageText || awaitingLanguageSelection) return;
 
-    const userMsg = { from: "user", text: messageText };
+    const userMsg = { from: "user", text: messageText, timestamp: Date.now() };
     const nextMessages = [...messages, userMsg];
     setMessages(nextMessages);
     setInput("");
@@ -106,6 +182,7 @@ const HelpPage = () => {
         {
           from: "system",
           text: "Please select the reply language: English or Hindi.",
+          timestamp: Date.now(),
         },
       ]);
       setAwaitingLanguageSelection(true);
@@ -213,25 +290,36 @@ const HelpPage = () => {
 
       {/*AI CHAT*/}
       {chatOpen && (
-        <div className="fixed bottom-5 right-5 w-80 bg-slate-900 border border-slate-700 rounded-xl shadow-lg flex flex-col">
+        <div className="fixed bottom-5 right-5 w-96 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl flex flex-col max-h-[600px]">
 
           {/* HEADER */}
-          <div className="flex justify-between items-center p-3 border-b border-slate-700">
-            <div>
-              <p className="font-semibold">AI Support</p>
-              <p className="text-xs text-slate-400">Professional SkillSwap assistant</p>
+          <div className="flex justify-between items-center p-4 border-b border-slate-700 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-t-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                <span className="text-indigo-600 font-bold text-sm">Ss</span>
+              </div>
+              <div>
+                <p className="font-semibold text-white">SkillSwap Assistant</p>
+                <p className="text-xs text-indigo-100">Professional support </p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase tracking-[.18em] text-slate-300">
-                {language === "english" ? "English" : "Hindi"}
+              <span className="rounded-full bg-white/20 px-3 py-1 text-xs uppercase tracking-[.18em] text-white">
+                {language === "english" ? "EN" : "HI"}
               </span>
               <button
                 onClick={resetChat}
-                className="rounded-lg bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
+                className="rounded-lg bg-white/20 px-2 py-1 text-xs text-white hover:bg-white/30 transition"
+                title="Reset conversation"
               >
-                Reset
+                🔄
               </button>
-              <button onClick={() => setChatOpen(false)}>✖</button>
+              <button 
+                onClick={() => setChatOpen(false)}
+                className="text-white hover:text-indigo-200 transition"
+              >
+                ✕
+              </button>
             </div>
           </div>
 
@@ -289,46 +377,98 @@ const HelpPage = () => {
           )}
 
           {/* MESSAGES */}
-          <div className="flex-1 p-3 space-y-2 max-h-60 overflow-y-auto">
+          <div className="flex-1 p-4 space-y-3 max-h-80 overflow-y-auto">
 
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`text-sm px-3 py-2 rounded-lg w-fit max-w-[80%] ${
-                  msg.from === "user"
-                    ? "bg-indigo-600 ml-auto"
-                    : "bg-slate-700"
-                }`}
+                className={`flex gap-3 ${msg.from === "user" ? "justify-end" : "justify-start"}`}
               >
-                {msg.text}
+                {msg.from === "assistant" && (
+                  <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white font-bold text-xs">AI</span>
+                  </div>
+                )}
+                <div
+                  className={`max-w-[75%] px-4 py-3 rounded-2xl ${
+                    msg.from === "user"
+                      ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white ml-auto"
+                      : msg.from === "system"
+                      ? "bg-slate-700 text-slate-300 text-center"
+                      : "bg-slate-700 text-slate-100"
+                  }`}
+                >
+                  <p className="text-sm leading-relaxed">{msg.text}</p>
+                  {msg.timestamp && (
+                    <p className="text-xs opacity-70 mt-1">
+                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  )}
+                </div>
+                {msg.from === "user" && (
+                  <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white font-bold text-xs">U</span>
+                  </div>
+                )}
               </div>
             ))}
 
             {loading && (
-              <p className="text-xs text-slate-400">AI typing...</p>
+              <div className="flex gap-3 justify-start">
+                <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">AI</span>
+                </div>
+                <div className="bg-slate-700 px-4 py-3 rounded-2xl">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
+                </div>
+              </div>
             )}
+
+            <div ref={messagesEndRef} />
 
           </div>
 
           {/* INPUT */}
-          <div className="p-2 border-t border-slate-700 flex gap-2">
+          <div className="p-4 border-t border-slate-700 bg-slate-800 rounded-b-xl">
+            <div className="flex gap-2">
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask anything about SkillSwap..."
+                className="flex-1 bg-slate-700 px-4 py-3 rounded-xl text-sm outline-none text-white placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 transition"
+                onKeyDown={(e) => e.key === "Enter" && prepareMessageForLanguage()}
+                disabled={awaitingLanguageSelection}
+              />
 
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask anything..."
-              className="flex-1 bg-slate-800 px-3 py-2 rounded-lg text-sm outline-none"
-              onKeyDown={(e) => e.key === "Enter" && prepareMessageForLanguage()}
-            />
+              <button
+                onClick={isListening ? stopVoiceInput : startVoiceInput}
+                className={`px-4 py-3 rounded-xl transition ${
+                  isListening 
+                    ? "bg-red-500 hover:bg-red-600 animate-pulse" 
+                    : "bg-slate-600 hover:bg-slate-500"
+                }`}
+                title={isListening ? "Stop voice input" : "Start voice input"}
+                disabled={awaitingLanguageSelection}
+              >
+                {isListening ? "🎤" : "🎙️"}
+              </button>
 
-            <button
-              onClick={prepareMessageForLanguage}
-              disabled={awaitingLanguageSelection}
-              className={`px-3 rounded-lg ${awaitingLanguageSelection ? "bg-slate-600 cursor-not-allowed" : "bg-indigo-600"}`}
-            >
-              ➤
-            </button>
-
+              <button
+                onClick={prepareMessageForLanguage}
+                disabled={awaitingLanguageSelection || !input.trim() || loading}
+                className={`px-4 py-3 rounded-xl transition ${
+                  awaitingLanguageSelection || !input.trim() || loading
+                    ? "bg-slate-600 cursor-not-allowed"
+                    : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"
+                }`}
+              >
+                {loading ? "⏳" : "➤"}
+              </button>
+            </div>
           </div>
 
         </div>

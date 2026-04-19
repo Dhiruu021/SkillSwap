@@ -74,13 +74,19 @@ const LoginPage = () => {
           <button type="submit" className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 shadow-lg" disabled={loading}>
             {loading ? 'Logging in...' : 'Log in'}
           </button>
+
+          <div className="mt-4 flex items-center justify-between text-sm text-slate-400">
+            <Link to="/forgot-password" className="text-indigo-400 hover:text-indigo-300 font-semibold">
+              Forgot password?
+            </Link>
+            <span>
+              New here?{' '}
+              <Link to="/register" className="text-indigo-400 hover:text-indigo-300 font-semibold">
+                Create an account
+              </Link>
+            </span>
+          </div>
         </form>
-        <p className="mt-6 text-center text-slate-400">
-          New here?{' '}
-          <Link to="/register" className="text-indigo-400 hover:text-indigo-300 font-semibold">
-            Create an account
-          </Link>
-        </p>
       </div>
     </div>
   );

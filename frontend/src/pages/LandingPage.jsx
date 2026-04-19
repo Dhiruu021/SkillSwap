@@ -174,15 +174,6 @@ const LandingPage = () => {
       </section>
 
 
-      {/* FOOTER */}
-      <footer className="border-t border-slate-800">
-
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8 text-center text-slate-400 text-xs sm:text-sm">
-          © {new Date().getFullYear()} SkillSwap — Learn. Teach. Grow.
-        </div>
-
-      </footer>
-
     </div>
   );
 };

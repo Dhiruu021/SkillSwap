@@ -18,7 +18,7 @@ export const getMe = async (req, res) => {
 };
 
 export const updateProfile = async (req, res) => {
-  const { name, bio, country, timezone, languagePreference, profilePhoto } = req.body;
+  const { name, bio, country, timezone, languagePreference, gender, profilePhoto } = req.body;
   const user = await User.findById(req.user.id);
   if (!user) {
     res.status(404);
@@ -32,8 +32,16 @@ export const updateProfile = async (req, res) => {
   if (languagePreference === 'hindi' || languagePreference === 'english') {
     user.languagePreference = languagePreference;
   }
+  if (gender && (gender === 'male' || gender === 'female')) {
+    user.gender = gender;
+  }
   if (profilePhoto) {
-    user.profilePhoto = await uploadBase64Image(profilePhoto);
+    try {
+      user.profilePhoto = await uploadBase64Image(profilePhoto);
+    } catch (error) {
+      console.error('Error uploading profile photo:', error);
+      // Continue without updating photo
+    }
   }
 
   await user.save();
@@ -46,6 +54,7 @@ export const updateProfile = async (req, res) => {
     country: user.country,
     timezone: user.timezone,
     languagePreference: user.languagePreference,
+    gender: user.gender,
     teachSkills: user.teachSkills,
     learnSkills: user.learnSkills,
     averageRating: user.averageRating,

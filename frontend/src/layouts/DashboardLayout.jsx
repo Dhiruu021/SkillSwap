@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../state/AuthContext.jsx";
 import logo from "../assets/logo.png";
+import FloatingAIChat from "../components/FloatingAIChat.jsx";
 
 const navItems = [
   { to: "/app", label: "Dashboard" },
@@ -190,6 +191,9 @@ const DashboardLayout = () => {
         </main>
 
       </div>
+
+      {/* Floating AI Chat */}
+      <FloatingAIChat />
     </div>
   );
 };

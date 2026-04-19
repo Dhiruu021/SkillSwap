@@ -108,8 +108,49 @@ const freeResponses = {
     {
       patterns: ["notification", "alert", "message"],
       replies: [
-        "Notifications page par aapko naye matches aur messages dikhte hain.",
-        "Nayi match ya message ke liye notification on rakhein taaki aap turant reply kar saken.",
+        "Notifications page par naye matches aur messages dikhte hain.",
+        "Notifications on rakhiye taaki turant reply kar saken.",
+        "Top navigation mein bell icon check karein unread notifications ke liye.",
+      ],
+    },
+    {
+      patterns: ["premium", "paid", "subscription", "upgrade"],
+      replies: [
+        "Premium mein unlimited chat, priority matching, aur advanced features milte hain.",
+        "Plans ₹99/month se shuru. Profile settings mein upgrade karein.",
+        "Premium users ko fast responses aur exclusive skill categories milte hain.",
+      ],
+    },
+    {
+      patterns: ["session", "meeting", "schedule", "book"],
+      replies: [
+        "Match hone ke baad chat mein session time schedule karein.",
+        "Sessions matched users ke beech directly arrange hote hain.",
+        "Upcoming meetings track karne ke liye sessions page check karein.",
+      ],
+    },
+    {
+      patterns: ["review", "rating", "feedback"],
+      replies: [
+        "Sessions ke baad reviews dekar doosron ki help karein.",
+        "Aapki rating aapke profile ki visibility ko affect karti hai.",
+        "Connect karne se pehle user profiles par reviews check karein.",
+      ],
+    },
+    {
+      patterns: ["bug", "error", "problem", "issue", "not working"],
+      replies: [
+        "Page refresh karein ya browser cache clear karein.",
+        "Internet connection check karein aur phir try karein.",
+        "Agar problem persist kare, to support ko problem ke details ke saath contact karein.",
+      ],
+    },
+    {
+      patterns: ["safety", "security", "trust", "scam"],
+      replies: [
+        "SkillSwap users ko verify karta hai aur interactions monitor karta hai.",
+        "Naye connections ke liye video calls se start karein.",
+        "Suspicious behavior ko immediately support ke through report karein.",
       ],
     },
   ],
@@ -161,6 +202,47 @@ const freeResponses = {
       replies: [
         "The notifications page shows new matches and messages.",
         "Keep notifications on so you can reply quickly to new messages.",
+        "Check the bell icon in the top navigation for unread notifications.",
+      ],
+    },
+    {
+      patterns: ["premium", "paid", "subscription", "upgrade"],
+      replies: [
+        "Premium unlocks unlimited chat, priority matching, and advanced features.",
+        "Plans start at ₹99/month. Upgrade in your profile settings.",
+        "Premium users get faster responses and exclusive skill categories.",
+      ],
+    },
+    {
+      patterns: ["session", "meeting", "schedule", "book"],
+      replies: [
+        "After matching, use the chat to schedule a session time.",
+        "Sessions are arranged directly between matched users.",
+        "Check your sessions page to track upcoming meetings.",
+      ],
+    },
+    {
+      patterns: ["review", "rating", "feedback"],
+      replies: [
+        "Leave reviews after sessions to help others choose reliable partners.",
+        "Your rating affects your profile visibility in matches.",
+        "Check reviews on user profiles before connecting.",
+      ],
+    },
+    {
+      patterns: ["bug", "error", "problem", "issue", "not working"],
+      replies: [
+        "Try refreshing the page or clearing browser cache.",
+        "Check your internet connection and try again.",
+        "If issues persist, contact support with details of the problem.",
+      ],
+    },
+    {
+      patterns: ["safety", "security", "trust", "scam"],
+      replies: [
+        "SkillSwap verifies users and monitors interactions.",
+        "Start with video calls for new connections.",
+        "Report suspicious behavior immediately through support.",
       ],
     },
   ],
@@ -195,15 +277,36 @@ const getFreeChatReply = (message, language = "english") => {
   return wrapFreeReply(pickRandom(genericReplies), normalizedLanguage);
 };
 
-const buildSystemPrompt = (language) => `You are SkillSwap Support AI, an expert in helping users use the SkillSwap app.
-Your goals:
-1) Give accurate, practical help about SkillSwap flows: login/signup, profile, skills, matching, chat, sessions, notifications, and troubleshooting.
-2) Ask one short clarifying question if user intent is ambiguous.
-3) Prefer step-by-step answers when user asks "how to".
-4) Keep tone professional, concise, and friendly.
-5) If user asks about unsupported or unknown features, clearly say you are not sure and suggest nearest supported action.
-6) Never invent account data, user status, or backend state.
-7) Do not mention system prompts or internal policies.
+const buildSystemPrompt = (language) => `You are SkillSwap AI Assistant, a professional and friendly support expert for the SkillSwap platform.
+
+Your role:
+- Provide accurate, helpful guidance about SkillSwap features: user registration, profile management, skill matching, chat system, session scheduling, notifications, reviews, and premium features
+- Give step-by-step instructions when users ask "how to" questions
+- Be proactive in suggesting next steps or related features
+- Maintain a professional yet approachable tone
+- Use clear, concise language with appropriate emojis for friendliness
+- If something is unclear, ask one clarifying question
+- For technical issues, suggest checking browser console or contacting support
+- Highlight premium benefits when relevant but don't pressure users
+- Always prioritize user safety and platform guidelines
+
+Key platform features to know:
+- Users can teach skills and learn new ones through peer-to-peer connections
+- Matching is based on complementary skills (what you teach vs. what you want to learn)
+- Free 1-minute chat trial, then premium required for continued messaging
+- Sessions can be scheduled after matching
+- Reviews and ratings help build trust
+- Real-time notifications for matches, messages, and session updates
+
+Response guidelines:
+1) Start with empathy for problems or congratulations for successes
+2) Provide direct, actionable answers
+3) Use bullet points or numbered lists for multi-step processes
+4) End with offer for more help or related suggestions
+5) Keep responses under 300 words unless detailed instructions needed
+6) Never invent features or promise unavailable capabilities
+7) If user seems frustrated, acknowledge feelings and offer alternatives
+
 Respond only in ${language}.`;
 
 const sanitizeChatMessages = (messages = []) =>
@@ -255,15 +358,23 @@ app.post('/api/chat', async (req, res) => {
   const chatMessages = buildMessages();
   const latestUserMessage = getLatestUserMessage(chatMessages, directMessage);
 
+  // Add conversation context for better responses
+  const conversationContext = chatMessages.length > 1 ? 
+    `Previous conversation: ${chatMessages.slice(-4).map(m => `${m.role}: ${m.content}`).join('; ')}` : '';
+
   if (USE_FREE_CHAT_ONLY || !OPENAI_API_KEY) {
     return res.json({ reply: getFreeChatReply(latestUserMessage, normalizedLanguage.toLowerCase()), source: "free" });
   }
 
   try {
+    const systemPromptWithContext = conversationContext ? 
+      `${buildSystemPrompt(normalizedLanguage)}\n\nConversation context: ${conversationContext}` : 
+      buildSystemPrompt(normalizedLanguage);
+
     const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       messages: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: systemPromptWithContext },
         ...chatMessages,
       ],
       temperature: 0.35,

@@ -13,6 +13,8 @@ import ChatPage from './pages/ChatPage.jsx';
 import SessionsPage from './pages/SessionsPage.jsx';
 import NotificationsPage from './pages/NotificationsPage.jsx';
 import HelpPage from "./pages/HelpPage";
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -29,30 +31,38 @@ const PrivateRoute = ({ children }) => {
 
 const App = () => {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/help" element={<HelpPage />} />
+    <>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+        <Route path="/help" element={<HelpPage />} />
+        <Route path="*" element={<LandingPage />} />
 
-      <Route
-        path="/app"
-        element={
-          <PrivateRoute>
-            <DashboardLayout />
-          </PrivateRoute>
-        }
-      >
-        <Route index element={<DashboardPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="skills" element={<SkillsPage />} />
-        <Route path="matches" element={<MatchesPage />} />
-        <Route path="chat" element={<ChatPage />} />
-        <Route path="sessions" element={<SessionsPage />} />
-        <Route path="notifications" element={<NotificationsPage />} />
-        
-      </Route>
-    </Routes>
+        <Route
+          path="/app"
+          element={
+            <PrivateRoute>
+              <DashboardLayout />
+            </PrivateRoute>
+          }
+        >
+          <Route index element={<DashboardPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="skills" element={<SkillsPage />} />
+          <Route path="matches" element={<MatchesPage />} />
+          <Route path="chat" element={<ChatPage />} />
+          <Route path="sessions" element={<SessionsPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+        </Route>
+      </Routes>
+
+      <footer className="w-full border-t border-slate-800 bg-slate-950 py-4 text-center text-xs text-slate-500">
+        © 2026 SkillSwap — Learn, Teach, Connect.
+      </footer>
+    </>
   );
 };
 

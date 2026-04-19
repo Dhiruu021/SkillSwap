@@ -7,6 +7,7 @@ import RegisterPage from './pages/RegisterPage.jsx';
 import DashboardLayout from './layouts/DashboardLayout.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
+import PublicProfilePage from './pages/PublicProfilePage.jsx';
 import SkillsPage from './pages/SkillsPage.jsx';
 import MatchesPage from './pages/MatchesPage.jsx';
 import ChatPage from './pages/ChatPage.jsx';
@@ -40,6 +41,7 @@ const App = () => {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         <Route path="/help" element={<HelpPage />} />
+        <Route path="/profile/:username" element={<PublicProfilePage />} />
         <Route path="*" element={<LandingPage />} />
 
         <Route

@@ -50,6 +50,7 @@ const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
     name: user?.name || '',
+    username: user?.username || '',
     bio: user?.bio || '',
     country: user?.country || '',
     timezone: user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
@@ -77,6 +78,7 @@ const ProfilePage = () => {
   const resetForm = () => {
     setForm({
       name: user?.name || '',
+      username: user?.username || '',
       bio: user?.bio || '',
       country: user?.country || '',
       timezone: user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
@@ -106,7 +108,11 @@ const ProfilePage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    let processedValue = value;
+    if (name === 'username') {
+      processedValue = value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    }
+    setForm((prev) => ({ ...prev, [name]: processedValue }));
 
     // Filter countries when typing in country field
     if (name === 'country') {
@@ -178,11 +184,32 @@ const ProfilePage = () => {
     }
   };
 
-  const handleCancel = () => {
-    resetForm();
-    setIsEditing(false);
-    setShowCountrySuggestions(false);
-    setShowTimezoneSuggestions(false);
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/profile/${user.username}`;
+    const shareData = {
+      title: `${user.name}'s Profile - Skill Swap`,
+      text: `Check out ${user.name}'s profile on Skill Swap!`,
+      url: shareUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log('Share cancelled or failed');
+      }
+    } else {
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setMessage('Profile link copied to clipboard!');
+        setTimeout(() => setMessage(''), 3000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+        setMessage('Failed to copy link');
+        setTimeout(() => setMessage(''), 3000);
+      }
+    }
   };
 
   if (!user) return null;
@@ -192,12 +219,22 @@ const ProfilePage = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-semibold text-gray-900 dark:text-slate-100">Profile</h1>
         {!isEditing && (
-          <button
-            className="btn-primary"
-            onClick={() => setIsEditing(true)}
-          >
-            Edit Profile
-          </button>
+          <div className="flex space-x-2">
+            {user.username && (
+              <button
+                className="btn-secondary"
+                onClick={handleShare}
+              >
+                Share Profile
+              </button>
+            )}
+            <button
+              className="btn-primary"
+              onClick={() => setIsEditing(true)}
+            >
+              Edit Profile
+            </button>
+          </div>
         )}
       </div>
 
@@ -207,6 +244,7 @@ const ProfilePage = () => {
           <div>
             <p className="text-lg font-semibold text-gray-900 dark:text-slate-100">{user.name}</p>
             <p className="text-sm text-gray-600 dark:text-slate-400">{user.email}</p>
+            <p className="text-sm text-gray-600 dark:text-slate-400">@{user.username}</p>
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -246,6 +284,10 @@ const ProfilePage = () => {
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">Name</label>
             <input className="input" name="name" value={form.name} onChange={handleChange} />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">Username</label>
+            <input className="input" name="username" value={form.username} onChange={handleChange} placeholder="lowercase letters, numbers, underscores only" />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">Bio</label>

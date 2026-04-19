@@ -9,6 +9,7 @@ const RegisterPage = () => {
   const [form, setForm] = useState({
     name: '',
     email: '',
+    username: '',
     password: '',
     bio: '',
     country: '',
@@ -24,7 +25,12 @@ const RegisterPage = () => {
   if (user) return <Navigate to="/app" replace />;
 
   const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    let processedValue = value;
+    if (name === 'username') {
+      processedValue = value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    }
+    setForm((prev) => ({ ...prev, [name]: processedValue }));
   };
 
   const handleSubmit = async (e) => {
@@ -35,6 +41,7 @@ const RegisterPage = () => {
       const payload = {
         name: form.name,
         email: form.email,
+        username: form.username,
         password: form.password,
         bio: form.bio,
         country: form.country.trim(),
@@ -97,6 +104,17 @@ const RegisterPage = () => {
               name="email"
               value={form.email}
               onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="md:col-span-1">
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Username</label>
+            <input
+              className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-slate-50 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors"
+              name="username"
+              value={form.username}
+              onChange={handleChange}
+              placeholder="lowercase letters, numbers, underscores only"
               required
             />
           </div>

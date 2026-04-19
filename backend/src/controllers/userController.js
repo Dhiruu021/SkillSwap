@@ -17,8 +17,36 @@ export const getMe = async (req, res) => {
   res.json(user);
 };
 
+export const getUserByUsername = async (req, res) => {
+  const { username } = req.params;
+  const user = await User.findOne({ username: username.toLowerCase() }).select('-password -email -walletBalance -walletTransactions -savedPaymentMethods -passwordResetToken -passwordResetExpires');
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  res.json({
+    id: user._id,
+    name: user.name,
+    username: user.username,
+    profilePhoto: user.profilePhoto,
+    bio: user.bio,
+    country: user.country,
+    timezone: user.timezone,
+    languagePreference: user.languagePreference,
+    gender: user.gender,
+    teachSkills: user.teachSkills,
+    learnSkills: user.learnSkills,
+    averageRating: user.averageRating,
+    reviewCount: user.reviewCount,
+    isOnline: user.isOnline,
+    lastActiveAt: user.lastActiveAt,
+    isPremium: user.isPremium
+  });
+};
+
 export const updateProfile = async (req, res) => {
-  const { name, bio, country, timezone, languagePreference, gender, profilePhoto } = req.body;
+  const { name, username, bio, country, timezone, languagePreference, gender, profilePhoto } = req.body;
   const user = await User.findById(req.user.id);
   if (!user) {
     res.status(404);
@@ -26,6 +54,15 @@ export const updateProfile = async (req, res) => {
   }
 
   if (name) user.name = name;
+  if (username) {
+    const trimmedUsername = username.toLowerCase().trim();
+    const existingUsername = await User.findOne({ username: trimmedUsername });
+    if (existingUsername && existingUsername._id.toString() !== user._id.toString()) {
+      res.status(400);
+      throw new Error('Username already taken');
+    }
+    user.username = trimmedUsername;
+  }
   if (bio) user.bio = bio;
   if (typeof country === 'string') user.country = country.trim();
   if (typeof timezone === 'string' && timezone.trim()) user.timezone = timezone.trim();
@@ -48,6 +85,7 @@ export const updateProfile = async (req, res) => {
   res.json({
     id: user._id,
     name: user.name,
+    username: user.username,
     email: user.email,
     profilePhoto: user.profilePhoto,
     bio: user.bio,
@@ -63,11 +101,11 @@ export const updateProfile = async (req, res) => {
 };
 
 export const purchasePremium = async (req, res) => {
-  const { planId, paymentReference } = req.body;
+  const { planId } = req.body;
 
-  if (!planId || !paymentReference || !paymentReference.trim()) {
+  if (!planId) {
     res.status(400);
-    throw new Error('Plan and payment reference are required');
+    throw new Error('Premium plan is required');
   }
 
   const planConfig = {
@@ -82,17 +120,16 @@ export const purchasePremium = async (req, res) => {
     throw new Error('Invalid premium plan selected');
   }
 
-  const trimmedRef = paymentReference.trim();
-  const existingPayment = await User.findOne({ 'premiumPayments.reference': trimmedRef });
-  if (existingPayment && existingPayment._id.toString() !== req.user.id) {
-    res.status(400);
-    throw new Error('This payment reference has already been used');
-  }
-
   const user = await User.findById(req.user.id);
   if (!user) {
     res.status(404);
     throw new Error('User not found');
+  }
+
+  const price = selectedPlan.price;
+  if (typeof user.walletBalance !== 'number' || user.walletBalance < price) {
+    res.status(400);
+    throw new Error('Insufficient wallet balance. Please add funds to your wallet and try again.');
   }
 
   const now = new Date();
@@ -100,15 +137,32 @@ export const purchasePremium = async (req, res) => {
   const expiresAt = new Date(baseDate);
   expiresAt.setDate(expiresAt.getDate() + selectedPlan.days);
 
-  user.isPremium = true;
-  user.premiumExpiresAt = expiresAt;
+  const trnId = `PREM-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  const walletTx = {
+    trnId,
+    type: 'debit',
+    amount: price,
+    method: 'Wallet',
+    methodId: 'wallet',
+    flow: 'out',
+    counterpartyName: 'SkillSwap Premium',
+    detailLine: `Premium chat (${selectedPlan.label})`,
+    headline: `Premium chat purchase`,
+    meta: { planId, premium: true },
+    createdAt: now,
+  };
+
+  user.walletBalance -= price;
   user.premiumPayments.push({
     planId,
-    reference: trimmedRef,
-    amount: selectedPlan.price,
+    reference: 'wallet',
+    amount: price,
     expiresAt,
     createdAt: now,
   });
+  user.walletTransactions.push(walletTx);
+  user.isPremium = true;
+  user.premiumExpiresAt = expiresAt;
 
   await user.save();
 
@@ -116,6 +170,7 @@ export const purchasePremium = async (req, res) => {
     message: `Premium activated for ${selectedPlan.label}. Valid until ${expiresAt.toDateString()}.`,
     isPremium: true,
     premiumExpiresAt: expiresAt,
+    walletBalance: user.walletBalance,
   });
 };
 

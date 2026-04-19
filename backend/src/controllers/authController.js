@@ -5,12 +5,18 @@ import { uploadBase64Image } from '../utils/cloudinary.js';
 import { sendPasswordResetEmail } from '../utils/email.js';
 
 export const register = async (req, res) => {
-  const { name, email, password, bio, country, timezone, languagePreference, profilePhoto, teachSkills, learnSkills } = req.body;
+  const { name, email, password, username, bio, country, timezone, languagePreference, profilePhoto, teachSkills, learnSkills } = req.body;
 
-  const existing = await User.findOne({ email });
-  if (existing) {
+  const existingEmail = await User.findOne({ email });
+  if (existingEmail) {
     res.status(400);
     throw new Error('Email already registered');
+  }
+
+  const existingUsername = await User.findOne({ username: username.toLowerCase().trim() });
+  if (existingUsername) {
+    res.status(400);
+    throw new Error('Username already taken');
   }
 
   const photoUrl = profilePhoto ? await uploadBase64Image(profilePhoto) : null;
@@ -19,6 +25,7 @@ export const register = async (req, res) => {
     name,
     email,
     password,
+    username: username.toLowerCase().trim(),
     bio,
     country: (country || '').trim(),
     timezone: (timezone || 'UTC').trim(),
@@ -38,6 +45,7 @@ export const register = async (req, res) => {
       id: user._id,
       name: user.name,
       email: user.email,
+      username: user.username,
       profilePhoto: user.profilePhoto,
       bio: user.bio,
       country: user.country,
@@ -72,6 +80,7 @@ export const login = async (req, res) => {
       id: user._id,
       name: user.name,
       email: user.email,
+      username: user.username,
       profilePhoto: user.profilePhoto,
       bio: user.bio,
       country: user.country,

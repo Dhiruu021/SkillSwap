@@ -4,6 +4,7 @@ import {
   getMe,
   updateProfile,
   getUserById,
+  getUserByUsername,
   searchUsersBySkill,
   purchasePremium
 } from '../controllers/userController.js';
@@ -15,6 +16,7 @@ router.put('/me', protect, updateProfile);
 router.post('/me/premium', protect, purchasePremium);
 router.get('/search', protect, searchUsersBySkill);
 router.get('/:id', protect, getUserById);
+router.get('/profile/:username', getUserByUsername);
 
 export default router;
 

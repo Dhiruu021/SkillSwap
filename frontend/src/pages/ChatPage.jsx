@@ -16,8 +16,6 @@ const ChatPage = () => {
   const [premiumNotice, setPremiumNotice] = useState("");
   const [showPremiumPlans, setShowPremiumPlans] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [showQr, setShowQr] = useState(false);
-  const [paymentReference, setPaymentReference] = useState("");
 
   const PREMIUM_PLANS = [
     { id: 'monthly', label: '1 Month', price: '₹99', duration: '1 month', description: 'Unlimited chat for 1 month' },
@@ -263,20 +261,12 @@ const ChatPage = () => {
 
   const handleUnlockPremium = () => {
     setShowPremiumPlans(true);
-    setPremiumNotice('Select a Premium plan and enter your payment reference to verify your purchase.');
-  };
-
-  const buildPaymentQrUrl = (plan) => {
-    const price = plan.price.replace(/[^0-9.]/g, '');
-    const upiData = `upi://pay?pa=skillswap@upi&pn=SkillSwap Premium&am=${price}&cu=INR`;
-    return `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(upiData)}`;
+    setPremiumNotice('Choose a Premium plan and pay from your wallet balance to continue messaging.');
   };
 
   const handleSelectPlan = (plan) => {
     setSelectedPlan(plan);
-    setShowQr(false);
-    setPaymentReference("");
-    setPremiumNotice(`Scan the QR and pay ${plan.price} for ${plan.label}. Then enter the payment reference ID to verify.`);
+    setPremiumNotice(`Pay ${plan.price} from your wallet to activate ${plan.label} Premium.`);
   };
 
   const handleActivatePremium = async () => {
@@ -285,22 +275,16 @@ const ChatPage = () => {
       return;
     }
 
-    if (!paymentReference.trim()) {
-      setPremiumNotice('Enter a valid payment reference to verify your purchase.');
-      return;
-    }
-
     try {
       const res = await api.post('/users/me/premium', {
         planId: selectedPlan.id,
-        paymentReference: paymentReference.trim(),
+        useWallet: true,
       });
 
       login(localStorage.getItem('token'), { ...user, isPremium: true });
       setPremiumNotice(res.data?.message || 'Premium activated! You can now continue messaging.');
       setShowPremiumPlans(false);
       setSelectedPlan(null);
-      setPaymentReference("");
     } catch (err) {
       const errorMsg = err?.response?.data?.message || 'Unable to activate Premium right now. Try again in a moment.';
       setPremiumNotice(errorMsg);
@@ -454,9 +438,9 @@ const ChatPage = () => {
                     {premiumNotice && <p className="mt-2 text-xs text-amber-300">{premiumNotice}</p>}
 
                     {showPremiumPlans && (
-                      <div className="mt-4 mx-auto w-full max-w-[420px] lg:max-w-full rounded-3xl border border-indigo-500/20 bg-slate-950/80 p-3 sm:p-4 max-h-[70vh] overflow-y-auto">
+                      <div className="mt-4 mx-auto w-full max-w-[420px] lg:max-w-full rounded-3xl border border-indigo-500/20 bg-slate-950/80 p-3 sm:p-4">
                         <div className="space-y-3">
-                          <p className="text-sm text-slate-300">Choose a Premium plan and verify your payment reference to unlock premium chat.</p>
+                          <p className="text-sm text-slate-300">Choose a Premium plan and pay from your wallet balance to unlock premium chat immediately.</p>
                           {!selectedPlan && (
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                               {PREMIUM_PLANS.map((plan) => (
@@ -480,87 +464,36 @@ const ChatPage = () => {
                           )}
 
                           {selectedPlan && (
-                            <div className="flex flex-col gap-3 rounded-3xl border border-slate-700/80 bg-slate-900 p-3 w-full max-w-full max-h-[60vh] overflow-y-auto">
+                            <div className="flex flex-col gap-4 rounded-3xl border border-slate-700/80 bg-slate-900 p-4">
                               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex-1">
                                   <p className="text-sm font-semibold text-slate-100">{selectedPlan.label} plan selected</p>
-                                  <p className="text-xs text-slate-400 mt-1">Pay {selectedPlan.price} and then enter the payment reference to verify purchase.</p>
+                                  <p className="text-xs text-slate-400 mt-1">This will deduct {selectedPlan.price} from your wallet balance.</p>
                                 </div>
-                                <div className="flex items-center gap-2 mt-2 sm:mt-0">
-                                  <span className="rounded-full bg-indigo-500 px-3 py-1 text-xs font-semibold text-white">{selectedPlan.duration}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedPlan(null);
-                                      setShowQr(false);
-                                      setPaymentReference('');
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedPlan(null);
                                       setPremiumNotice('Select a different plan to continue.');
-                                    }}
-                                    className="rounded-2xl border border-slate-700 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 transition"
-                                  >
-                                    Change plan
-                                  </button>
-                                </div>
+                                  }}
+                                  className="rounded-2xl border border-slate-700 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 transition"
+                                >
+                                  Change plan
+                                </button>
                               </div>
 
-                              <div className="grid gap-3 lg:grid-cols-[minmax(220px,auto)_1fr]">
-                                <div className="flex flex-col items-center gap-3 rounded-3xl border border-slate-800/80 bg-slate-950 p-3 overflow-hidden">
-                                  {!showQr ? (
-                                    <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-slate-800/90 bg-slate-900 p-4 text-center w-full">
-                                      <p className="text-sm font-semibold text-slate-100">Preview your payment QR</p>
-                                      <p className="text-xs text-slate-400">Load the QR code only when you are ready to pay so the page stays responsive.</p>
-                                      <button
-                                        type="button"
-                                        onClick={() => setShowQr(true)}
-                                        className="rounded-2xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400 transition w-full sm:w-auto"
-                                      >
-                                        Show QR code
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <>
-                                      <img
-                                        src={buildPaymentQrUrl(selectedPlan)}
-                                        alt="Payment QR code"
-                                        loading="lazy"
-                                        decoding="async"
-                                        className="w-full max-w-[180px] md:max-w-[200px] rounded-3xl bg-slate-900 p-3 mx-auto"
-                                        onError={(e) => {
-                                          e.currentTarget.onerror = null;
-                                          e.currentTarget.style.display = 'none';
-                                        }}
-                                      />
-                                      <p className="text-xs text-slate-400 text-center max-w-[240px] w-full mx-auto">
-                                        Scan this QR to pay {selectedPlan.price} to SkillSwap Premium. Use any UPI-enabled app or payment method that supports the QR.
-                                      </p>
-                                    </>
-                                  )}
-                                </div>
-
-                                <div className="flex flex-col justify-between gap-4 rounded-3xl border border-slate-800/80 bg-slate-950 p-3 md:p-4">
-                                  <div className="space-y-4">
-                                    <input
-                                      value={paymentReference}
-                                      onChange={(e) => setPaymentReference(e.target.value)}
-                                      placeholder="Payment reference or transaction ID"
-                                      className="input w-full"
-                                    />
-
-                                    <button
-                                      type="button"
-                                      onClick={handleActivatePremium}
-                                      className="rounded-2xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400 transition w-full"
-                                    >
-                                      Verify payment & unlock
-                                    </button>
-                                  </div>
-
-                                  <div className="rounded-3xl border border-slate-700/80 bg-slate-900 p-3 md:p-4 text-sm text-slate-300">
-                                    <p className="font-semibold text-slate-100">Verification</p>
-                                    <p className="mt-2 text-xs text-slate-400">After paying, enter the transaction or reference ID here and tap Verify to unlock premium chat.</p>
-                                  </div>
-                                </div>
+                              <div className="rounded-3xl border border-slate-800/80 bg-slate-950 p-4 text-sm text-slate-300">
+                                <p className="font-semibold text-slate-100">Wallet payment</p>
+                                <p className="mt-2 text-xs text-slate-400">Your wallet balance will be debited instantly. Top up in Payments if your balance is insufficient.</p>
                               </div>
+
+                              <button
+                                type="button"
+                                onClick={handleActivatePremium}
+                                className="rounded-2xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400 transition w-full"
+                              >
+                                Pay from wallet and unlock
+                              </button>
                             </div>
                           )}
                         </div>

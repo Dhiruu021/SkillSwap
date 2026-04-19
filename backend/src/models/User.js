@@ -19,6 +19,20 @@ const userSchema = new mongoose.Schema({
       message: 'Invalid email format',
     },
   },
+  username: {
+    type: String,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    minlength: 3,
+    maxlength: 20,
+    validate: {
+      validator: function(v) {
+        return /^[a-z0-9_]+$/.test(v);
+      },
+      message: 'Username can only contain lowercase letters, numbers, and underscores',
+    },
+  },
   password: {
     type: String,
     required: true,
